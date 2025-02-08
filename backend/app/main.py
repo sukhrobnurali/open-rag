@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.v1 import health, documents
+from app.api.v1 import health, documents, query
 
 app = FastAPI(
     title="Advanced RAG System API",
@@ -21,7 +21,8 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
-app.include_router(documents.router, prefix="/api/v1", tags=["documents"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
+app.include_router(query.router, prefix="/api/v1/query", tags=["query"])
 
 
 @app.get("/")

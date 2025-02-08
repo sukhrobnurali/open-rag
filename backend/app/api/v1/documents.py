@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.document import Document
 from app.schemas.document import DocumentResponse, DocumentUploadResponse
 from app.services.document_service import DocumentService
+from app.services.query_service import QueryService
 from app.config import settings
 
 router = APIRouter()
@@ -16,8 +17,9 @@ router = APIRouter()
 # Ensure upload directory exists
 os.makedirs(settings.upload_dir, exist_ok=True)
 
-# Initialize document service
+# Initialize services
 document_service = DocumentService()
+query_service = QueryService()
 
 ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.doc', '.docx'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -138,3 +140,23 @@ async def get_document_chunks(document_id: int, db: Session = Depends(get_db)):
             for chunk in chunks
         ]
     }
+
+
+@router.get("/{document_id}/summary")
+async def get_document_summary(document_id: int, db: Session = Depends(get_db)):
+    """Get AI-generated summary of a document."""
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    if document.status != "completed":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Document must be processed before generating summary. Current status: {document.status}"
+        )
+    
+    try:
+        summary = await query_service.get_document_summary(document_id, db)
+        return summary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate summary: {str(e)}")
