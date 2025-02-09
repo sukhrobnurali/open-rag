@@ -10,6 +10,8 @@ from app.models.document import Document
 from app.schemas.document import DocumentResponse, DocumentUploadResponse
 from app.services.document_service import DocumentService
 from app.services.query_service import QueryService
+from app.auth.auth import get_current_user_optional, get_current_active_user
+from app.models.user import User
 from app.config import settings
 
 router = APIRouter()
@@ -28,7 +30,8 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 @router.post("/upload", response_model=DocumentUploadResponse)
 async def upload_document(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional)
 ):
     # Validate file type
     file_extension = Path(file.filename).suffix.lower()
@@ -62,7 +65,8 @@ async def upload_document(
         file_path=file_path,
         file_type=file_extension,
         file_size=len(content),
-        status="uploaded"
+        status="uploaded",
+        user_id=current_user.id if current_user else None
     )
     
     db.add(db_document)
