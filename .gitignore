@@ -62,3 +62,10 @@ frontend/dist/
 
 # Docker
 docker-compose.override.yml
+
+# Development files (should not be in production repo)
+CLAUDE.md
+project_details.txt
+rag-implementation-steps.md
+*.claude
+.claude/
